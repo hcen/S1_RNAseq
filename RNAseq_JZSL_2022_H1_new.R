@@ -33,6 +33,9 @@ library(circlize)
 library(gridtext)
 library(scales)
 
+#install.packages("msigdbr")
+library(msigdbr) # load MSigDB gene sets, v7.5.1 (released January 2022) 
+
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path)) ##Set working directory to where this file is.
 getwd()
 
@@ -46,6 +49,7 @@ mh.cor.consistent=m.cor%>%left_join(h.cor,by="symbol",suffix=c("_M","_H"))%>%
   mutate(both.correlated=ifelse(adj.p_H<0.05, "yes", "no"))
 View(mh.cor.consistent)
 write.csv(mh.cor.consistent,"output/MH_both_correlated.csv",row.names = F)
+
 # prepare raw counts and meta data ===================
 
 M1.G.68 = read.table("input/For Howard - All H1 data package/Diff68-69 H1 cells_raw counts/H1-M1G-S1D3-Diff68.counts.genes.coverage.txt") %>% 
@@ -590,7 +594,7 @@ show_col(c("thistle1", "orchid4","purple3"))
 col_fun = colorRamp2(c(1, 6), c("thistle1", "orchid4"))
 brewer.pal(n = 3, name = "Purple")
 
-ha = HeatmapAnnotation(rank = c(rep(1,5),rep(2,3),rep(3,3),rep(4,3),rep(5,5),rep(6,5)),
+ha = HeatmapAnnotation(rank = c(rep(1,5),rep(2,3),rep(3,3),rep(4,5),rep(5,3),rep(6,5)),
                        col = list(rank = col_fun)
                        )
 
@@ -631,8 +635,7 @@ heatmap.H1 <- Heatmap(m.z, #matrix_Z_score_total,
                                                    end_index_M1A, 
                                                    end_index_W50A, 
                                                    end_index_C3A,
-                                                   end_index_C3G,
-                                                   end_index_M1G
+                                                   end_index_C3G
                                                    )
                                                ]
                                            )
@@ -707,10 +710,13 @@ heatmap.H1 <- Heatmap(m.z, #matrix_Z_score_total,
 draw(heatmap.H1)
 #
 
-png(file = "figures/heatmap_H1.png",
+png(file = "figures/heatmap_H1_correlated.png",
      width = 7, 
      height = 7, 
      units = "in", res = 600)
+pdf(file = "figures/heatmap_H1_correlated.pdf",
+    width = 7, 
+    height = 7)
 
 png(file = "figures/heatmap_H1_DE.png",
     width = 7, 
@@ -748,28 +754,8 @@ grid.text(expression("W50.G"),
                     col = "black"))
 
 #Condition label 2
-
-grid.rect(x = (loc2$x - loc1$x)*(end_index_M1A + 
-                                   end_index_W50G)/2/ncol(m.z),
-          y = 0,
-          width = (loc2$x - loc1$x)*(number_of_M1A)/ncol(m.z), 
-          height = (loc2$y - loc1$y)/2,
-          just = c("center", "bottom"),
-          gp = gpar(fill = alpha(cbPalette[2],0.5),
-                    col = "white"
-          )
-)
-grid.text(expression("M1.A"), 
-          x = (loc2$x - loc1$x)*(end_index_M1A + 
-                                   end_index_W50G)/2/ncol(m.z),
-          y = 0.25,
-          just = c("center", "center"),
-          gp = gpar(fontsize = 11))
-
-
-#Condition label 3
 grid.rect(x = (loc2$x - loc1$x)*(end_index_W50A + 
-                                   end_index_M1A)/2/ncol(m.z),
+                                   end_index_W50G)/2/ncol(m.z),
           y = 0,
           width = (loc2$x - loc1$x)*(number_of_W50A)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
@@ -780,32 +766,34 @@ grid.rect(x = (loc2$x - loc1$x)*(end_index_W50A +
 )
 grid.text(expression("W50.A"), 
           x = (loc2$x - loc1$x)*(end_index_W50A + 
-                                   end_index_M1A)/2/ncol(m.z),
+                                   end_index_W50G)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
 
-#Condition label 4
-grid.rect(x = (loc2$x - loc1$x)*(end_index_C3A +
+
+#Condition label 3
+grid.rect(x = (loc2$x - loc1$x)*(end_index_M1A + 
                                    end_index_W50A)/2/ncol(m.z),
           y = 0,
-          width = (loc2$x - loc1$x)*(number_of_C3A)/ncol(m.z), 
+          width = (loc2$x - loc1$x)*(number_of_M1A)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
           just = c("center", "bottom"),
-          gp = gpar(fill = alpha(cbPalette[4],0.5),
+          gp = gpar(fill = alpha(cbPalette[2],0.5),
                     col = "white"
           )
 )
-grid.text(expression("C3.A"), 
-          x = (loc2$x - loc1$x)*(end_index_C3A +
+grid.text(expression("M1.A"), 
+          x = (loc2$x - loc1$x)*(end_index_M1A + 
                                    end_index_W50A)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
 
-#Condition label 5
+
+#Condition label 4
 grid.rect(x = (loc2$x - loc1$x)*(end_index_C3G +
-                                   end_index_C3A)/2/ncol(m.z),
+                                   end_index_M1A)/2/ncol(m.z),
           y = 0,
           width = (loc2$x - loc1$x)*(number_of_C3G)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
@@ -816,7 +804,27 @@ grid.rect(x = (loc2$x - loc1$x)*(end_index_C3G +
 )
 grid.text(expression("C3.G"), 
           x = (loc2$x - loc1$x)*(end_index_C3G +
-                                   end_index_C3A)/2/ncol(m.z),
+                                   end_index_M1A)/2/ncol(m.z),
+          y = 0.25,
+          just = c("center", "center"),
+          gp = gpar(fontsize = 11))
+
+#Condition label 5
+
+
+grid.rect(x = (loc2$x - loc1$x)*(end_index_C3A +
+                                   end_index_C3G)/2/ncol(m.z),
+          y = 0,
+          width = (loc2$x - loc1$x)*(number_of_C3A)/ncol(m.z), 
+          height = (loc2$y - loc1$y)/2,
+          just = c("center", "bottom"),
+          gp = gpar(fill = alpha(cbPalette[4],0.5),
+                    col = "white"
+          )
+)
+grid.text(expression("C3.A"), 
+          x = (loc2$x - loc1$x)*(end_index_C3A +
+                                   end_index_C3G)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
@@ -824,7 +832,7 @@ grid.text(expression("C3.G"),
 #Condition label 6
 
 grid.rect(x = (loc2$x - loc1$x)*(end_index_M1G + 
-                                   end_index_C3G)/2/ncol(m.z),
+                                   end_index_C3A)/2/ncol(m.z),
           y = 0,
           width = (loc2$x - loc1$x)*(number_of_M1G)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
@@ -835,7 +843,7 @@ grid.rect(x = (loc2$x - loc1$x)*(end_index_M1G +
 )
 grid.text(expression("M1.G"), 
           x = (loc2$x - loc1$x)*(end_index_M1G + 
-                                   end_index_C3G)/2/ncol(m.z),
+                                   end_index_C3A)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
@@ -965,6 +973,11 @@ dev.off()
 #res.merge.M <- read.table(file="output/Results_DE_merge_MEL1.txt",row.names=1)
 #norm.M.de <- norm.M %>% filter(rownames(norm.M) %in% c(res.merge.M$symbol)) 
 
+norm.data <- read.table("output/Norm_data_H1_new_all5.txt")
+View(norm.data)
+cn <- colnames(norm.data)
+norm.data <- norm.data %>% select(c(grep("W50.G", cn), grep("W50.A", cn), grep("M1.A",cn), 
+                       grep("C3.G",cn), grep("C3.A",cn), grep("M1.G",cn)))
 
 correlation_function<- function(df){
   r <- (1:ncol(df))
@@ -973,7 +986,7 @@ correlation_function<- function(df){
   df.t = as.data.frame(t(df)) #convert row to column
   #rank <- as.numeric(as.character(c(6,6,5,5,1,1,2,2,4,4,3,3)))
   #rank <- as.numeric(as.character(c(6,6,6,6,5,5,5,5,1,1,1,1,2,2,4,4,3,3)))
-  rank <- c(rep(1,5),rep(2,3),rep(3,3),rep(4,3),rep(5,5),rep(6,5))
+  rank <- c(rep(1,5),rep(2,3),rep(3,3),rep(4,5),rep(5,3),rep(6,5))
   n <- ncol(df.t)
   correlations <-lapply(1:n, function(x) (cor.test(rank,df.t[,x],method='spearman')))
   #r value
@@ -1014,11 +1027,12 @@ View(rank.sig)
 #head(dup)
 #write.txt(as.data.frame(dup), file="output/dup_cor_ua_M.xlsx",col.names = TRUE, row.names = TRUE, append = F)
 
-dim(rank.sig) # 1562 genes adj. p<0.05
-dim(rank.sig.ua) # 2973 genes unadj. p<0.05
+dim(rank.sig) # 1767 genes adj. p<0.05
+dim(rank.sig.ua) # 3320 genes unadj. p<0.05
 dim(res.merge) # 5759 DE genes
 dim(norm.data) # 10484 reliably detected genes (>5 counts all samples)
 
+#write.csv(rank.sig, "output/H1_correlated_genes.csv", row.names = F)
 
 # end of correlation analysis =========
 
@@ -1037,11 +1051,14 @@ corr.marker <-  rank.cor %>% filter(row.names(rank.cor) %in% c( "FOXA2", "SOX17"
                                                "LGR5", "SMAD2", "HNF1B", "HNF4A", "GATA3", 
                                                "KRT18", "KRT8", "FN1", "LINC00458")) 
 View(corr.marker)
+
+#write.csv(corr.marker, "output/H1_markers_correlation.csv", row.names = F)
+
 corr.marker <- corr.marker[order(corr.marker$Rho,decreasing = T),]
 
 m <- rownames_to_column(corr.marker) %>% 
   left_join(rownames_to_column(as.data.frame(norm.data))) %>%
-  column_to_rownames() %>% select(!c(1:10))
+  column_to_rownames() %>% select(!c(1:4))
 
 #m <- as.matrix(as.data.frame(lapply(m.anno, as.numeric),check.names=F))
 View(m)
@@ -1049,10 +1066,10 @@ m.z <- t(scale(t(m))) #%>% as.data.frame()
 View(m.z)
 colnames(m.z)
 
-m.z[m.z>4] <- NA
-m.z <- t(scale(t(m.z)))
-m.z[is.na(m.z)] <- 4
-m.z[m.z>4] <- 4
+#m.z[m.z>4] <- NA
+#m.z <- t(scale(t(m.z)))
+#m.z[is.na(m.z)] <- 4
+#m.z[m.z>4] <- 4
 max(abs(m.z))
 
 colnames(m.z)
@@ -1093,7 +1110,7 @@ show_col(c("thistle1", "orchid4","purple3"))
 col_fun = colorRamp2(c(1, 6), c("thistle1", "orchid4"))
 brewer.pal(n = 3, name = "Purple")
 
-ha = HeatmapAnnotation(rank = c(rep(1,5),rep(2,3),rep(3,3),rep(4,3),rep(5,5),rep(6,5)),
+ha = HeatmapAnnotation(rank = c(rep(1,5),rep(2,3),rep(3,3),rep(4,5),rep(5,3),rep(6,5)),
                        col = list(rank = col_fun)
 )
 
@@ -1103,11 +1120,13 @@ heatmap.H1 <- Heatmap(m.z, #matrix_Z_score_total,
                       
                       #show_row_names = FALSE,
                       
-                      show_row_names = TRUE,
+      # change here !!!
+                      show_row_names = #FALSE, 
+                                      TRUE,
                       
                       show_column_names = FALSE,
                       
-                      # row_labels = gt_render(m.anno$protein.symbol),
+                      #row_labels = gt_render(rownames(m.z)),
                       row_names_gp = gpar(fontsize = 13),
                       column_names_side = "top",
                       column_dend_side = "bottom",
@@ -1138,8 +1157,7 @@ heatmap.H1 <- Heatmap(m.z, #matrix_Z_score_total,
                                                end_index_M1A, 
                                                end_index_W50A, 
                                                end_index_C3A,
-                                               end_index_C3G,
-                                               end_index_M1G
+                                               end_index_C3G
                         )
                         ]
                         )
@@ -1160,8 +1178,11 @@ heatmap.H1 <- Heatmap(m.z, #matrix_Z_score_total,
                       column_order = 1:ncol(m.z),
                       height = 
                         
-                        
-                        unit(100, "mm"), 
+     # change here !!!                   
+                        unit(
+                      #    150,
+                          100, 
+                             "mm"), 
                       
                       width = ncol(m.z)*unit(5, "mm"),
                       border_gp = gpar(col = "grey"),
@@ -1179,11 +1200,18 @@ png(file = "figures/heatmap_H1_correlated.png",
     height = 7, 
     units = "in", res = 600)
 
-png(file = "figures/heatmap_H1_correlated_markers.png",
+pdf(file = "figures/heatmap_H1_correlated.pdf",
+    width = 7, 
+    height = 7)
+
+
+png(file = "figures/heatmap_H1_markers.png",
     width = 7, 
     height = 5, 
     units = "in", res = 600)
-
+pdf(file = "figures/heatmap_H1_markers.pdf",
+    width = 7, 
+    height = 5)
 
 draw(heatmap.H1)
 
@@ -1193,6 +1221,9 @@ dev.off()
 seekViewport("annotation_empty_1")
 loc1 = deviceLoc(x = unit(0, "npc"), y = unit(0, "npc"))
 loc2 = deviceLoc(x = unit(1, "npc"), y = unit(1, "npc"))
+
+
+####Condition labels
 
 
 ####Condition labels
@@ -1216,28 +1247,8 @@ grid.text(expression("W50.G"),
                     col = "black"))
 
 #Condition label 2
-
-grid.rect(x = (loc2$x - loc1$x)*(end_index_M1A + 
-                                   end_index_W50G)/2/ncol(m.z),
-          y = 0,
-          width = (loc2$x - loc1$x)*(number_of_M1A)/ncol(m.z), 
-          height = (loc2$y - loc1$y)/2,
-          just = c("center", "bottom"),
-          gp = gpar(fill = alpha(cbPalette[2],0.5),
-                    col = "white"
-          )
-)
-grid.text(expression("M1.A"), 
-          x = (loc2$x - loc1$x)*(end_index_M1A + 
-                                   end_index_W50G)/2/ncol(m.z),
-          y = 0.25,
-          just = c("center", "center"),
-          gp = gpar(fontsize = 11))
-
-
-#Condition label 3
 grid.rect(x = (loc2$x - loc1$x)*(end_index_W50A + 
-                                   end_index_M1A)/2/ncol(m.z),
+                                   end_index_W50G)/2/ncol(m.z),
           y = 0,
           width = (loc2$x - loc1$x)*(number_of_W50A)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
@@ -1248,32 +1259,34 @@ grid.rect(x = (loc2$x - loc1$x)*(end_index_W50A +
 )
 grid.text(expression("W50.A"), 
           x = (loc2$x - loc1$x)*(end_index_W50A + 
-                                   end_index_M1A)/2/ncol(m.z),
+                                   end_index_W50G)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
 
-#Condition label 4
-grid.rect(x = (loc2$x - loc1$x)*(end_index_C3A +
+
+#Condition label 3
+grid.rect(x = (loc2$x - loc1$x)*(end_index_M1A + 
                                    end_index_W50A)/2/ncol(m.z),
           y = 0,
-          width = (loc2$x - loc1$x)*(number_of_C3A)/ncol(m.z), 
+          width = (loc2$x - loc1$x)*(number_of_M1A)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
           just = c("center", "bottom"),
-          gp = gpar(fill = alpha(cbPalette[4],0.5),
+          gp = gpar(fill = alpha(cbPalette[2],0.5),
                     col = "white"
           )
 )
-grid.text(expression("C3.A"), 
-          x = (loc2$x - loc1$x)*(end_index_C3A +
+grid.text(expression("M1.A"), 
+          x = (loc2$x - loc1$x)*(end_index_M1A + 
                                    end_index_W50A)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
 
-#Condition label 5
+
+#Condition label 4
 grid.rect(x = (loc2$x - loc1$x)*(end_index_C3G +
-                                   end_index_C3A)/2/ncol(m.z),
+                                   end_index_M1A)/2/ncol(m.z),
           y = 0,
           width = (loc2$x - loc1$x)*(number_of_C3G)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
@@ -1284,7 +1297,27 @@ grid.rect(x = (loc2$x - loc1$x)*(end_index_C3G +
 )
 grid.text(expression("C3.G"), 
           x = (loc2$x - loc1$x)*(end_index_C3G +
-                                   end_index_C3A)/2/ncol(m.z),
+                                   end_index_M1A)/2/ncol(m.z),
+          y = 0.25,
+          just = c("center", "center"),
+          gp = gpar(fontsize = 11))
+
+#Condition label 5
+
+
+grid.rect(x = (loc2$x - loc1$x)*(end_index_C3A +
+                                   end_index_C3G)/2/ncol(m.z),
+          y = 0,
+          width = (loc2$x - loc1$x)*(number_of_C3A)/ncol(m.z), 
+          height = (loc2$y - loc1$y)/2,
+          just = c("center", "bottom"),
+          gp = gpar(fill = alpha(cbPalette[4],0.5),
+                    col = "white"
+          )
+)
+grid.text(expression("C3.A"), 
+          x = (loc2$x - loc1$x)*(end_index_C3A +
+                                   end_index_C3G)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
@@ -1292,7 +1325,7 @@ grid.text(expression("C3.G"),
 #Condition label 6
 
 grid.rect(x = (loc2$x - loc1$x)*(end_index_M1G + 
-                                   end_index_C3G)/2/ncol(m.z),
+                                   end_index_C3A)/2/ncol(m.z),
           y = 0,
           width = (loc2$x - loc1$x)*(number_of_M1G)/ncol(m.z), 
           height = (loc2$y - loc1$y)/2,
@@ -1303,11 +1336,10 @@ grid.rect(x = (loc2$x - loc1$x)*(end_index_M1G +
 )
 grid.text(expression("M1.G"), 
           x = (loc2$x - loc1$x)*(end_index_M1G + 
-                                   end_index_C3G)/2/ncol(m.z),
+                                   end_index_C3A)/2/ncol(m.z),
           y = 0.25,
           just = c("center", "center"),
           gp = gpar(fontsize = 11))
-
 ###Top label gaps
 
 
@@ -1449,7 +1481,22 @@ rank.sig <- rank.cor %>% filter(adj.p<0.05)
 rank.pos <- rank.sig %>% filter(Rho>0)
 rank.neg <- rank.sig %>% filter(Rho<0)
 
-write.table(rank.cor, sep="\t",file="output/correlated_genes_H1_new_all5.txt", row.names=TRUE,col.names=NA,quote=FALSE)
+write.csv(rank.cor, file="output/correlated_genes_H1_new.csv", row.names=F)
+
+corr.marker <-  rank.cor %>% filter(row.names(rank.cor) %in% c( "FOXA2", "SOX17", "CXCR4", "CD177", 
+                                                                "KIT", "CER1", "GSC", "HHEX", "MIXL1", 
+                                                                "EOMES", "NODAL", "GATA4", "GATA6", 
+                                                                "LGR5", "SMAD2", "HNF1B", "HNF4A", "GATA3", 
+                                                                "KRT18", "KRT8", "FN1", "LINC00458")) 
+
+rank.cor.marker <- rank.cor %>%
+  filter(symbol %in% c( "FOXA2", "SOX17", "CXCR4", "CD177", 
+                        "KIT", "CER1", "GSC", "HHEX", "MIXL1", 
+                        "EOMES", "NODAL", "GATA4", "GATA6", 
+                        "LGR5", "SMAD2", "HNF1B", "HNF4A", "GATA3", 
+                        "KRT18", "KRT8", "FN1", "LINC00458"))
+View(rank.cor.marker)
+write.csv(rank.cor.marker, file="output/correlated_genes_H1_new_marker.csv", row.names=F)
 
 # end of converting IDs for correlated genes ==========
 
@@ -1491,8 +1538,8 @@ rank.cor.TF.surface <- rank.cor %>%
   filter(adj.p<0.05)
 View(rank.cor.TF.surface)
 dim(rank.cor.TF.surface) #263
-write.table(rank.cor, sep="\t",file="output/correlated_genes_H1_new_all5.txt", row.names=TRUE,col.names=NA,quote=FALSE)
-write.table(rank.cor.TF.surface, sep="\t",file="output/correlated_genes_H1_new_TF_surface.txt", row.names=TRUE,col.names=NA,quote=FALSE)
+write.csv(rank.cor, file="output/correlated_genes_H1_new.txt", row.names=F)
+write.csv(rank.cor.TF.surface, file="output/correlated_genes_H1_new_TF_surface.txt", row.names=F)
 
 # end of annotte TF and surface markers ==========
 
@@ -1527,7 +1574,7 @@ gsea <- function(x){
   )
   gse.kegg <<- setReadable(gse.kegg, OrgDb = org.Hs.eg.db, keyType="ENTREZID") # The geneID column is translated from EntrezID to symbol
   gse.kegg.df <<- as.data.frame(gse.kegg)
-  head(gse.kegg.df)
+  View(gse.kegg.df)
   #write.xlsx2(gse.kegg.df, file="output/GSEA_.xlsx", sheetName = "KEGG",
   #            col.names = TRUE, row.names = TRUE, append = TRUE)
   gseReactome <- gsePathway(
@@ -1539,7 +1586,7 @@ gsea <- function(x){
     verbose = TRUE)
   gseReactome <<- setReadable(gseReactome, OrgDb = org.Hs.eg.db, keyType="ENTREZID") # The geneID column is translated from EntrezID to symbol
   gseReactome.df <<- as.data.frame(gseReactome)
-  head(gseReactome.df)
+  View(gseReactome.df)
   #write.xlsx2(gseReactome.df, file="output/GSEA_.xlsx", sheetName = "Reactome",
   #            col.names = TRUE, row.names = TRUE, append = TRUE)
   
@@ -1614,6 +1661,35 @@ gsea <- function(x){
   #write.xlsx2(gse.wp.df, file="output/GSEA_.xlsx", sheetName = "mKEGG",
   #            col.names = TRUE, row.names = TRUE, append = TRUE)
   
+  # mSigDB Hallmark gene sets  
+  #msigdbr_show_species()
+  m_df <- msigdbr(species = "Homo sapiens")
+  head(m_df, 2) %>% as.data.frame
+  
+  # H: hallmark gene sets
+  # C1: positional gene sets
+  # C2: curated gene sets
+  # C3: motif gene sets
+  # C4: computational gene sets
+  # C5: GO gene sets
+  # C6: oncogenic signatures
+  # C7: immunologic signatures
+  
+  # MSigDb GSEA
+  h_t2g <- msigdbr(species = "Homo sapiens", category = "H") %>% 
+    dplyr::select(gs_name, entrez_gene)
+  head(h_t2g)
+  
+  gse.hallmark <- GSEA(x, #geneList 
+                       TERM2GENE = h_t2g)
+  
+  gse.hallmark <<- setReadable(gse.hallmark, OrgDb = org.Hs.eg.db, keyType="ENTREZID") # The geneID column is translated from EntrezID to symbol
+  
+  gse.hallmark.df <- as.data.frame(gse.hallmark)
+  
+  View(gse.hallmark.df)
+  
+  
 }
 
 # option 1 rank by Rho
@@ -1633,6 +1709,7 @@ write.csv(gseGO.mf.df, file = "output/GSEA_p_GOmf_H1_new.csv")
 write.csv(gseGO.cc.df, file = "output/GSEA_p_GOcc_H1_new.csv")
 write.csv(gse.mkegg.df, file = "output/GSEA_p_mkegg_H1_new.csv")
 write.csv(gse.wp.df, file = "output/GSEA_p_wiki_H1_new.csv")
+write.csv(gse.hallmark.df, file = "output/GSEA_p_hallmark_H1_new.csv")
 
 # end of GSEA for correlated genes ==================
 
@@ -1660,7 +1737,7 @@ ora<- function(x){
                      qvalueCutoff=1)
   KEGG <<- setReadable(KEGG, OrgDb = org.Hs.eg.db, keyType="ENTREZID") # The geneID column is translated from EntrezID to symbol
   KEGG.df <<- as.data.frame(KEGG)
-  head(KEGG.df)
+  View(KEGG.df)
   #KEGG.df2 <- KEGG.df
   #KEGG.df2$Description <- gsub(x = KEGG.df2$Description, pattern = "\\ ",replacement = "_") 
   #KEGG.df2$Description <- gsub(x = KEGG.df2$Description, pattern = "\\,",replacement = ".")
@@ -1678,7 +1755,7 @@ ora<- function(x){
                          qvalueCutoff=1)
   react <<- setReadable(react, OrgDb = org.Hs.eg.db, keyType="ENTREZID") # The geneID column is translated from EntrezID to symbol
   react.df <<- as.data.frame(react)
-  head(react.df)
+  View(react.df)
   #react.df2 <- react.df
   #react.df2$Description <- gsub(x = react.df2$Description, pattern = "\\ ",replacement = "_") 
   #react.df2$Description <- gsub(x = react.df2$Description, pattern = "\\,",replacement = ".")
@@ -1694,7 +1771,7 @@ ora<- function(x){
                     qvalueCutoff  = 1,
                     readable      = TRUE)
   gobp.df <<- as.data.frame(gobp)
-  head(gobp.df)
+  View(gobp.df)
   #write.xlsx2(gobp.df, file="output/correlated_genes_ORA.xlsx", sheetName = "GO_BP",
   #            col.names = TRUE, row.names = TRUE, append = TRUE)
   
@@ -1723,6 +1800,17 @@ ora<- function(x){
   head(gocc.df)
   #write.xlsx2(gocc.df, file="output/correlated_genes_ORA.xlsx", sheetName = "GO_CC",
   #            col.names = TRUE, row.names = TRUE, append = TRUE)
+  
+  # MSigDb ORA
+  hallmark <- enricher(x$entrez, 
+                       universe = all_genes,
+                       pvalueCutoff = 1,
+                       qvalueCutoff = 1,
+                       TERM2GENE=h_t2g)
+  hallmark <- setReadable(hallmark, OrgDb = org.Hs.eg.db, keyType="ENTREZID") # The geneID column is translated from EntrezID to symbol
+  hallmark.df <- as.data.frame(hallmark)
+  View(hallmark.df)
+  
 }
 
 # save ORA all correlated genes
@@ -1738,7 +1826,7 @@ write.csv(react.df, file = "output/ORA_cor_positive_reactome_H1_new.csv")
 write.csv(gobp.df, file = "output/ORA_cor_positive_gobp_H1_new.csv")
 write.csv(gomf.df, file = "output/ORA_cor_positive_gomf_H1_new.csv")
 write.csv(gocc.df, file = "output/ORA_cor_positive_gocc_H1_new.csv")
-
+write.csv(hallmark.df, file = "output/ORA_cor_positive_hallmark_H1_new.csv")
 
 #save ORA negatively correlated genes
 write.csv(KEGG.df, file = "output/ORA_cor_negative_kegg_H1_new.csv")
@@ -1746,6 +1834,8 @@ write.csv(react.df, file = "output/ORA_cor_negative_reactome_H1_new.csv")
 write.csv(gobp.df, file = "output/ORA_cor_negative_gobp_H1_new.csv")
 write.csv(gomf.df, file = "output/ORA_cor_negative_gomf_H1_new.csv")
 write.csv(gocc.df, file = "output/ORA_cor_negative_gocc_H1_new.csv")
+
+write.csv(hallmark.df, file = "output/ORA_cor_negative_hallmark_H1_new.csv")
 
 # end ORA =========
 
